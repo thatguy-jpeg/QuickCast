@@ -153,3 +153,48 @@ def forecast(cur, name_chosen, product_name=True):
 
     cur.execute(query, (name_chosen,))
     return cur.fetchall()
+
+def update(cur, row_id, quantity, sales, discount, profit, returned):
+    
+    sales = sales * 100
+    profit = profit * 100
+    discount = discount * 100
+
+    query = f'''
+    UPDATE orders SET 
+    quantity=?, sales=?, discount=?, profit=?, returned=?
+    WHERE row_id=?;
+    '''
+
+    cur.execute(query, (quantity, sales, discount, profit, returned, row_id))
+    cur.connection.commit()
+
+def delete(cur, user_id):
+    subquery = f'''
+    SELECT order_id
+    FROM records
+    WHERE user_id=?
+    '''
+    query = f'''
+    DELETE FROM orders
+    WHERE order_id IN ({subquery});
+    '''
+
+    cur.execute(query, (user_id,))
+
+    query = f'''
+    DELETE FROM records
+    WHERE user_id=?;
+    '''
+
+    cur.execute(query, (user_id,))
+
+    query = f'''
+    DELETE FROM users
+    WHERE user_id=?
+    '''
+
+    cur.execute(query, (user_id,))
+
+    cur.connection.commit()
+
