@@ -1,3 +1,5 @@
+#init created as just a function for ease of use
+
 def init():
     
     import sqlite3 as sql
@@ -6,11 +8,17 @@ def init():
 
     c = con.cursor()
 
+    #foreign_keys off right now to make table creation throw less errors
+
     query = '''
     PRAGMA foreign_keys = OFF;
     '''
 
     c.execute(query)
+
+    #creation of the records table, which is the main table where most joins occur
+    #comprises of mostly ids, which link to the tables around it. These ids are also foreign keys
+    #created as strict as to prevent SQLites loose typing from throwing errors further down
 
     query = '''
     CREATE TABLE IF NOT EXISTS records(
@@ -32,6 +40,8 @@ def init():
 
     c.execute(query)
 
+    #users table, is mainly used to be able to seperate users data according to the user, password field mostly unused
+
     query = '''
     CREATE TABLE IF NOT EXISTS users(
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,6 +52,8 @@ def init():
 
     c.execute(query)
 
+    #customers table, to prevent similarly named people from screwing up queries, as queries use group by
+
     query = '''
     CREATE TABLE IF NOT EXISTS customers(
     customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,6 +63,8 @@ def init():
 
     c.execute(query)
 
+    #employees table, similar purpose to customers table
+
     query = '''
     CREATE TABLE IF NOT EXISTS employees(
     employee_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,6 +73,9 @@ def init():
     '''
 
     c.execute(query)
+
+    #locations table, purposefully not fully normalized to reduce join complexity
+    #importantly, state and postal code are not required fields, so that other countries can be represented
 
     query = '''
     CREATE TABLE IF NOT EXISTS locations(
@@ -72,6 +89,9 @@ def init():
 
     c.execute(query)
 
+    #products table, also not fully normalized, category and subcategory are not required fields as they 
+    #currently are unused fields for QuickCast 
+
     query = '''
     CREATE TABLE IF NOT EXISTS products(
     product_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,6 +102,13 @@ def init():
     '''
 
     c.execute(query)
+
+    #orders table, has a very interesting combination of order_id, product_id, and row_id
+    #as the orders table has a one to many relationship with both records and products
+    #as a product can be in many orders, and a order can have many products
+    #profit is a not required field, as sales can be used as a metric similar to it
+    #returned is not required because it is a currently unused field
+    #references both the products and records table
 
     query = '''
     CREATE TABLE IF NOT EXISTS orders(

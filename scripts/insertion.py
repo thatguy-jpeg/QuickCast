@@ -1,7 +1,10 @@
+#File is a reusable function to insert data into the database
+
 import pandas as pd
 import numpy as np
 import sqlite3 as sql
-from database_init import init
+
+#Ensures that the postal codes are the right data type for the Strict SQLite database
 
 def clean_postal_code(value):
     if pd.isna(value):
@@ -9,6 +12,9 @@ def clean_postal_code(value):
     if isinstance(value, float):
         return str(int(value))
     return str(value)
+
+#Takes the sqlite cursor and pandas dataframe as arguments
+#Inserts all unique locations into the database thorugh a loop and also returns the ids of those records for later use
 
 def insert_locations(cur, df):
     df = df[["Country", "State", "City", "Postal Code"]].drop_duplicates()
@@ -28,6 +34,9 @@ def insert_locations(cur, df):
 
     return df
 
+#Takes the sqlite cursor and pandas dataframe as arguments
+#Inserts all unique customers into the database through a loop and returns the ids of those records for later use
+
 def insert_customers(cur, df):
     df = df[["Customer ID", "Customer Name"]].drop_duplicates(subset=["Customer ID"])
     ids = []
@@ -43,6 +52,9 @@ def insert_customers(cur, df):
     cur.connection.commit()
 
     return df
+
+#Takes the sqlite cursor and pandas dataframe as arguments
+#Inserts all unique products into the database through a loop and returns the ids of those records for later use
 
 def insert_products(cur, df):
     df = df[["Product ID", "Product Name", "Category", "Sub-Category"]].drop_duplicates(subset = ["Product ID"])
@@ -61,6 +73,9 @@ def insert_products(cur, df):
     cur.connection.commit()
 
     return df
+
+#Takes the sqlite cursor and pandas dataframe as arguments
+#Inserts all unique employees into the database through a loop and returns the ids of those records for later use
 
 def insert_employees(cur, df):
     df = df[["Retail Sales People"]].drop_duplicates()
@@ -81,6 +96,9 @@ def insert_employees(cur, df):
 
     return df
 
+#Takes the sqlite cursor and pandas dataframe, with the inputted username, as arguments
+#Takes the username the user gave and sends it into the database, and also returns the user id
+
 def insert_user(cur, username="Guest", password=""):
     id = []
 
@@ -96,6 +114,12 @@ def insert_user(cur, username="Guest", password=""):
     cur.connection.commit()
 
     return id
+
+#Takes the sqlite cursor and pandas dataframe, alongside the inputted username
+#utilizes all the other insert functions to insert into the records table and then the orders table
+#using the ids from all the other insert functions, it maps the id onto the correct record
+#then using the now record having the ids it drops all other columns, leaving the ids and order date
+#similarly for the orders table it takes the extended records and takes out only the relevant fields
 
 def insert_records_orders(cur, df, username="Guest", password=""):
     customers = insert_customers(cur=cur, df=df)
@@ -113,6 +137,8 @@ def insert_records_orders(cur, df, username="Guest", password=""):
     df["Order Date"] = pd.to_datetime(df["Order Date"], format="%m/%d/%Y").dt.strftime("%Y-%m-%d")
 
     recs = df[["Order ID", "customer_id", "location_id", "employee_id", "user_id", "Order Date"]].drop_duplicates(subset = ["Order ID"])
+
+    #for all numeric sales values, convert into integers so that math is precise and don't run into SQLite arithmetic errors
 
     df[["Sales"]] = df[["Sales"]] * 100
     df[["Profit"]] = df[["Profit"]] * 100
